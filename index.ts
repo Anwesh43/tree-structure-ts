@@ -20,3 +20,42 @@ class ScaleUtil {
         return Math.max(0, scale - i / n)
     }
 }
+
+class DrawingUtil {
+
+    static drawLine(context : CanvasRenderingContext2D, x1 : number, y1 : number, x2 : number, y2 : number) {
+        context.beginPath()
+        context.lineTo(x1, y1)
+        context.moveTo(x2, y2)
+        context.stroke()
+    }
+
+    static drawCircle(context : CanvasRenderingContext2D, x : number, y : number, r : number) {
+        context.beginPath()
+        context.arc(x, y, r, 0, 2 * Math.PI)
+        context.fill()
+    }
+
+    static getXGap(i : number) {
+        return (w / (i + 1) * sizeFactor)
+    }
+
+    
+
+    static drawNode(context : CanvasRenderingContext2D, i : number, next : boolean, scale : number, cb : Function) {
+        const currParts : number = next ? parts : parts - 1
+        const x : number =  DrawingUtil.getXGap(i)
+        const y : number = i == 0 ? h :  (h / i + 1 * divideFactor)
+        if (next) {
+            context.save()
+            context.translate(x, 0)
+            DrawingUtil.drawLine(context, 0, 0, 0, y * ScaleUtil.divideScale(scale, 2, currParts))
+            context.restore()
+        }
+        const r : number = Math.min(w, h) / rFactor 
+        const sc1 : number = ScaleUtil.divideScale(scale, 0, currParts)
+        const sc2 : number = ScaleUtil.divideScale(scale, 1, currParts)
+        DrawingUtil.drawLine(context, 0, 0, x * sc1, 0)
+        DrawingUtil.drawCircle(context, x, 0, r * sc2)
+    }
+}
