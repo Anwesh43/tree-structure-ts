@@ -9,3 +9,14 @@ const backColor : string = "#BDBDBD"
 const sizeFactor : number = 7.9 
 const divideFactor : number = 2
 const children : number = 2
+
+class ScaleUtil {
+    
+    static maxScale(scale : number, i : number, n : number) : number {
+        return Math.max(0, scale - i / n)
+    }
+
+    static divideScale(scale : number, i : number, n : number) : number {
+        return Math.max(0, scale - i / n)
+    }
+}
