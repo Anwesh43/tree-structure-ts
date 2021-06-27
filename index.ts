@@ -90,3 +90,25 @@ class Stage {
         stage.handleTap()
     }
 }
+
+class State {
+
+    scale : number = 0 
+    dir : number = 0
+
+    update(cb : Function) {
+        this.scale += this.dir * scGap 
+        if (Math.abs(this.scale) > 1) {
+            this.scale = 1 
+            this.dir = 0
+            cb()
+        }
+    }
+
+    startUpdating(cb : Function) {
+        if (this.dir == 0) {
+            this.dir = 1
+            cb()
+        }
+    }
+}
