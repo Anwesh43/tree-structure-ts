@@ -183,3 +183,65 @@ class TSNode {
         })
     }
 }
+
+class TreeStructure {
+
+    root : TSNode = new TSNode(0)
+    queue : Array<TSNode> = [this.root]
+
+    draw(context : CanvasRenderingContext2D) {
+        this.root.draw(context)
+    } 
+
+    update(cb : Function) {
+        const n : number = this.queue.length 
+        let k : number = 0 
+        for (let j = 0; j < n; j++) {
+            this.queue[j].update(() => {
+                k++ 
+                if (k == n) {
+                    this.flushAndPopulateQueue(cb, n)
+                }
+            })
+        }
+    }
+
+    flushAndPopulateQueue(cb : Function, n : number) {
+        const nodes : Array<TSNode> = this.queue.splice(0, n)
+        cb()
+        nodes.forEach((node : TSNode) => {
+            this.queue.push(...node.children)
+        })
+    }
+
+    startUpdating(cb : Function) {
+        this.queue.forEach((node : TSNode, i : number) => {
+            node.startUpdating(() => {
+                if (i == 0) {
+                    cb()
+                }
+            })
+        })
+    }
+}
+
+class Renderer {
+
+    ts : TreeStructure = new TreeStructure() 
+    animator : Animator = new Animator()
+    render(context : CanvasRenderingContext2D) {
+        this.ts.draw(context)    
+    }
+
+    handleTap(cb : Function) {
+        this.ts.startUpdating(() => {
+            this.animator.start(() => {
+                cb()
+                this.ts.update(() => {
+                    this.animator.stop()
+                    cb()
+                })
+            })
+        })
+    }
+}
