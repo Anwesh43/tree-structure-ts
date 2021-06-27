@@ -36,8 +36,12 @@ class DrawingUtil {
         context.fill()
     }
 
-    static getXGap(i : number) {
+    static getXGap(i : number) : number{
         return (w / (i + 1) * sizeFactor)
+    }
+
+    static getYSize(i : number) : number {
+        return i == 0 ? h : h / (divideFactor * i)
     }
 
     
@@ -50,13 +54,16 @@ class DrawingUtil {
             context.save()
             context.translate(x, 0)
             DrawingUtil.drawLine(context, 0, 0, 0, y * ScaleUtil.divideScale(scale, 2, currParts))
+            cb()
             context.restore()
         }
         const r : number = Math.min(w, h) / rFactor 
         const sc1 : number = ScaleUtil.divideScale(scale, 0, currParts)
         const sc2 : number = ScaleUtil.divideScale(scale, 1, currParts)
+        context.save()
         DrawingUtil.drawLine(context, 0, 0, x * sc1, 0)
         DrawingUtil.drawCircle(context, x, 0, r * sc2)
+        context.restore()
     }
 }
 
@@ -130,5 +137,49 @@ class Animator {
             this.animated = false 
             clearInterval(this.interval)
         }
+    }
+}
+
+class TSNode {
+
+    children : Array<TSNode> = []
+    state : State = new State()
+
+    constructor(private level : number) {
+        this.populateChildren()
+
+    }
+    
+    populateChildren() {
+        for (let i = 0; i < children; i++) {
+            this.children.push(new TSNode(this.level + 1))
+        }
+    }
+
+    draw(context : CanvasRenderingContext2D, next : boolean = false) {
+        DrawingUtil.drawNode(context, this.level, next, this.state.scale, () => {
+            this.children.forEach((child : TSNode, j : number) => {
+                const gap : number = DrawingUtil.getYSize(this.level)
+                const yGap : number = (gap * 0.8) / this.children.length 
+                context.save()
+                context.translate(0, 0.1 * gap + yGap * j)
+                child.draw(context, true)
+                context.restore()
+            })
+        })
+    }
+
+    update(cb : Function) {
+        this.state.update(cb)
+    }
+
+    startUpdating(cb : Function) {
+        this.state.startUpdating(cb)
+    }
+
+    consumeChildren(cb : Function) {
+        this.children.forEach((node : TSNode) => {
+            cb(node)
+        })
     }
 }
