@@ -6,9 +6,10 @@ const strokeFactor : number = 90
 const rFactor : number = 26.9 
 const delay : number = 20 
 const backColor : string = "#BDBDBD"
-const sizeFactor : number = 7.9 
+const sizeFactor : number = 3.9 
 const divideFactor : number = 3.4
 const children : number = 2
+const color : string = "indigo"
 
 class ScaleUtil {
     
@@ -53,9 +54,12 @@ class DrawingUtil {
         console.log("X, Y", x, y)
         const r : number = Math.min(w, h) / (rFactor * (i + 1)) 
         if (next) {
+            const sc : number = ScaleUtil.divideScale(scale, 2, currParts)
             context.save()
             context.translate(x, r)
-            DrawingUtil.drawLine(context, 0, 0, 0, y * ScaleUtil.divideScale(scale, 2, currParts))
+            if (sc > 0) {
+                DrawingUtil.drawLine(context, 0, 0, 0, y * ScaleUtil.divideScale(scale, 2, currParts))
+            }
             cb()
             context.restore()
         }
@@ -63,7 +67,9 @@ class DrawingUtil {
         const sc1 : number = ScaleUtil.divideScale(scale, 0, currParts)
         const sc2 : number = ScaleUtil.divideScale(scale, 1, currParts)
         context.save()
-        DrawingUtil.drawLine(context, 0, r, x * sc1, r)
+        if (sc1 > 0) {
+            DrawingUtil.drawLine(context, 0, r, x * sc1, r)
+        }
         DrawingUtil.drawCircle(context, x, r, r * sc2)
         context.restore()
     }
@@ -245,8 +251,8 @@ class Renderer {
     ts : TreeStructure = new TreeStructure() 
     animator : Animator = new Animator()
     render(context : CanvasRenderingContext2D) {
-        context.fillStyle = 'indigo'
-        context.strokeStyle = 'black'
+        context.fillStyle = color
+        context.strokeStyle = color
         context.lineCap = 'round'
         context.lineWidth = Math.min(w, h) / strokeFactor
         this.ts.draw(context)    
