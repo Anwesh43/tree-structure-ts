@@ -3,11 +3,11 @@ const h : number = window.innerHeight
 const parts : number = 3 
 const scGap : number = 0.02 / parts 
 const strokeFactor : number = 90 
-const rFactor : number = 12.9 
+const rFactor : number = 26.9 
 const delay : number = 20 
 const backColor : string = "#BDBDBD"
 const sizeFactor : number = 7.9 
-const divideFactor : number = 2
+const divideFactor : number = 3.4
 const children : number = 2
 
 class ScaleUtil {
@@ -17,7 +17,7 @@ class ScaleUtil {
     }
 
     static divideScale(scale : number, i : number, n : number) : number {
-        return Math.max(0, scale - i / n)
+        return Math.min(1 / n, ScaleUtil.maxScale(scale, i, n)) * n
     }
 }
 
@@ -25,8 +25,8 @@ class DrawingUtil {
 
     static drawLine(context : CanvasRenderingContext2D, x1 : number, y1 : number, x2 : number, y2 : number) {
         context.beginPath()
-        context.lineTo(x1, y1)
-        context.moveTo(x2, y2)
+        context.moveTo(x1, y1)
+        context.lineTo(x2, y2)
         context.stroke()
     }
 
@@ -37,7 +37,7 @@ class DrawingUtil {
     }
 
     static getXGap(i : number) : number{
-        return (w / (i + 1) * sizeFactor)
+        return (w / ((i + 1) * sizeFactor))
     }
 
     static getYSize(i : number) : number {
@@ -49,20 +49,22 @@ class DrawingUtil {
     static drawNode(context : CanvasRenderingContext2D, i : number, next : boolean, scale : number, cb : Function) {
         const currParts : number = next ? parts : parts - 1
         const x : number =  DrawingUtil.getXGap(i)
-        const y : number = i == 0 ? h :  (h / i + 1 * divideFactor)
+        const y : number = DrawingUtil.getYSize(i)
+        console.log("X, Y", x, y)
+        const r : number = Math.min(w, h) / (rFactor * (i + 1)) 
         if (next) {
             context.save()
-            context.translate(x, 0)
+            context.translate(x, r)
             DrawingUtil.drawLine(context, 0, 0, 0, y * ScaleUtil.divideScale(scale, 2, currParts))
             cb()
             context.restore()
         }
-        const r : number = Math.min(w, h) / rFactor 
+        
         const sc1 : number = ScaleUtil.divideScale(scale, 0, currParts)
         const sc2 : number = ScaleUtil.divideScale(scale, 1, currParts)
         context.save()
-        DrawingUtil.drawLine(context, 0, 0, x * sc1, 0)
-        DrawingUtil.drawCircle(context, x, 0, r * sc2)
+        DrawingUtil.drawLine(context, 0, r, x * sc1, r)
+        DrawingUtil.drawCircle(context, x, r, r * sc2)
         context.restore()
     }
 }
@@ -156,19 +158,23 @@ class TSNode {
     }
     
     populateChildren() {
+        if (this.level >= 5) {
+            return 
+        }
         for (let i = 0; i < children; i++) {
             this.children.push(new TSNode(this.level + 1))
         }
     }
 
-    draw(context : CanvasRenderingContext2D, next : boolean = false) {
-        DrawingUtil.drawNode(context, this.level, next, this.state.scale, () => {
+    draw(context : CanvasRenderingContext2D) {
+        //console.log("SCALE_NODE", this.state.scale)
+        DrawingUtil.drawNode(context, this.level, this.children.length > 0, this.state.scale, () => {
             this.children.forEach((child : TSNode, j : number) => {
                 const gap : number = DrawingUtil.getYSize(this.level)
                 const yGap : number = (gap * 0.8) / this.children.length 
                 context.save()
                 context.translate(0, 0.1 * gap + yGap * j)
-                child.draw(context, true)
+                child.draw(context)
                 context.restore()
             })
         })
@@ -215,8 +221,12 @@ class TreeStructure {
         const nodes : Array<TSNode> = this.queue.splice(0, n)
         cb()
         nodes.forEach((node : TSNode) => {
-            this.queue.push(...node.children)
+            
+            node.consumeChildren((curr : TSNode) => {
+                this.queue.push(curr)
+            })
         })
+        console.log("QUEUE", this.queue)
     }
 
     startUpdating(cb : Function) {
@@ -235,6 +245,10 @@ class Renderer {
     ts : TreeStructure = new TreeStructure() 
     animator : Animator = new Animator()
     render(context : CanvasRenderingContext2D) {
+        context.fillStyle = 'indigo'
+        context.strokeStyle = 'black'
+        context.lineCap = 'round'
+        context.lineWidth = Math.min(w, h) / strokeFactor
         this.ts.draw(context)    
     }
 
